@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/iaintshine/ruby-test-tracer.svg?branch=master)](https://travis-ci.org/iaintshine/ruby-test-tracer)
 # Test::Tracer
 
 Fully OpenTracing compatible in-memory Tracer implementation which records all the spans, and includes methods which you might find helpful during testing. The tracer is fully agnostic to any testing framework.
