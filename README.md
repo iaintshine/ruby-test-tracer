@@ -1,6 +1,8 @@
 # Test::Tracer
 
-TODO: Write description
+Fully OpenTracing compatible in-memory Tracer implementation which records all the spans, and includes methods which you might find helpful during testing. The tracer is fully agnostic to any testing framework.
+
+The framework came to alive, because I had a constant need of some kind of "recording" tracer that I could use during tests of new instrumentation libraries for OpenTracing like rails-tracer, tracing-logger etc.
 
 ## Installation
 
@@ -18,9 +20,51 @@ Or install it yourself as:
 
     $ gem install test-tracer
 
+## Test::Tracer
+
+In addition to OT compatible methods `Test::Tracer` provides the following methods:
+
+1. `spans` returns all spans, including those in progress.
+2. `finished_spans` returns only finished spans.
+
+## Test::Span
+
+In addition to OT compatible methods `Test::Span` provides the following methods:
+
+1. `tracer` returns the tracer the span was created by.
+1. `in_progress?` informs whether the span is in progress, or it's finished.
+2. `start_time` returns when the span was started.
+2. `end_time` returns when the span was finished, or nil if still in progress.
+2. `tags` returns the span's tags.
+2. `logs` returns the span's logs, an array of `Test::Span::LogEntry`s.
+
+The modification operations e.g. `operation_name=`, `set_tag`, `set_baggage_item` on a span are not allowed after it's finished. It throws `Test::Span::SpanAlreadyFinished` exception. The same with `finish`. The span can be finished only once.
+
+## Test::SpanContext
+
+Context propagation is fully implemented by the tracer, and is inspired by [Jaeger](http://jaeger.readthedocs.io/en/latest/) and [TraceContext](https://github.com/TraceContext/tracecontext-spec/pull/1/files). In addition to OT compatible methods `Test::SpanContext` provides the following methods:
+
+1. `trace_id` returns the ID of the whole trace forest.
+1. `span_id` returns the ID of the current span.
+2. `parent_span_id` returns the ID of the parent span.
+
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+gem 'test-tracer'
+
+tracer = Test::Tracer.new
+
+root_span = tracer.start_span("root")
+tracer.spans # => will include root_span
+child_span = tracer.start_span("child", child_of: root_span)
+tracer.spans # => will include both root_span, child_span 
+
+child_span.finish
+tracer.finished_spans # => will include child_span
+root_span.finish
+tracer.finished_spans # => will include child_span, root_span
+```
 
 ## Development
 
