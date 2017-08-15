@@ -87,6 +87,84 @@ RSpec.describe Test::Tracer do
     end
   end
 
+  describe :inject do
+    let(:tracer) { Test::Tracer.new }
+    let(:span) { tracer.start_span("root") }
+
+    context "text map format" do
+      it "propagates context" do
+        carrier = {}
+        tracer.inject(span.context, OpenTracing::FORMAT_TEXT_MAP, carrier)
+
+        expect(carrier["trace_id"]).to eq(span.context.trace_id)
+        expect(carrier["span_id"]).to eq(span.context.span_id)
+        expect(carrier["parent_span_id"]).to eq(span.context.parent_span_id)
+      end
+    end
+
+    context "rack format" do
+      it "propagates context" do
+        carrier = {}
+        tracer.inject(span.context, OpenTracing::FORMAT_RACK, carrier)
+
+        expect(carrier["X-Trace-Id"]).to eq(span.context.trace_id)
+        expect(carrier["X-Span-Id"]).to eq(span.context.span_id)
+        expect(carrier["X-Parent-Span-Id"]).to eq(span.context.parent_span_id)
+      end
+    end
+  end
+
+  describe :extract do
+    let(:tracer) { Test::Tracer.new }
+    let(:span) { tracer.start_span("root") }
+
+    context "text map format" do
+      it "extracts context" do
+        carrier = {
+          'trace_id' => span.context.trace_id,
+          'span_id' => span.context.span_id,
+          'parent_span_id' => span.context.parent_span_id
+        }
+        span_context = tracer.extract(OpenTracing::FORMAT_TEXT_MAP, carrier)
+
+        expect(span_context).to be_instance_of(::Test::SpanContext)
+        expect(span_context.trace_id).to eq(span.context.trace_id)
+        expect(span_context.span_id).to eq(span.context.span_id)
+        expect(span_context.parent_span_id).to eq(span.context.parent_span_id)
+      end
+
+      it "returns nil if attributes not present" do
+        carrier = {}
+        span_context = tracer.extract(OpenTracing::FORMAT_TEXT_MAP, carrier)
+
+        expect(span_context).to eq(nil)
+      end
+    end
+
+    context "rack format" do
+      it "extracts context" do
+        carrier = {
+          'HTTP_X_TRACE_ID' => span.context.trace_id,
+          'HTTP_X_SPAN_ID' => span.context.span_id,
+          'HTTP_X_PARENT_SPAN_ID' => span.context.parent_span_id
+        }
+        span_context = tracer.extract(OpenTracing::FORMAT_RACK, carrier)
+
+        expect(span_context).to be_instance_of(::Test::SpanContext)
+        expect(span_context.trace_id).to eq(span.context.trace_id)
+        expect(span_context.span_id).to eq(span.context.span_id)
+        expect(span_context.parent_span_id).to eq(span.context.parent_span_id)
+      end
+
+      it "returns nil if headers not present" do
+        carrier = {}
+        span_context = tracer.extract(OpenTracing::FORMAT_RACK, carrier)
+
+        expect(span_context).to eq(nil)
+      end
+    end
+  end
+
   describe :clear do
     let(:tracer) do
       t = Test::Tracer.new
