@@ -15,5 +15,9 @@ module Test
     def NotNull!(value)
       raise NullError, "Value must not be nil" unless value
     end
+
+    def Argument!(expression, message = "Illegal argument")
+      raise ArgumentError, message unless expression
+    end
   end
 end

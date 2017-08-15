@@ -1,0 +1,5 @@
+require "test/propagation/injector"
+require "test/propagation/extractor"
+require "test/propagation/codec"
+require "test/propagation/rack_codec"
+require "test/propagation/text_map_codec"
