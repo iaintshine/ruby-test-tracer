@@ -52,7 +52,7 @@ Context propagation is fully implemented by the tracer, and is inspired by [Jaeg
 ## Usage
 
 ```ruby
-gem 'test-tracer'
+require 'test/tracer'
 
 tracer = Test::Tracer.new
 
