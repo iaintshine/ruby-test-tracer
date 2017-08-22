@@ -28,6 +28,46 @@ In addition to OT compatible methods `Test::Tracer` provides the following metho
 1. `spans` returns all spans, including those in progress.
 2. `finished_spans` returns only finished spans.
 
+### Usage
+
+```ruby
+require "test/tracer"
+
+describe "Test::Tracer examples" do
+  let(:tracer) { Test::Tracer.new }
+
+  context "when we expect no traces" do
+    it "does not have any traces started" do
+      expect(tracer.spans).to be_empty
+    end
+
+    it "does not have any traces recorded" do
+      expect(tracer.finished_spans).to be_empty
+    end
+  end
+
+  context "when we expect traces to be present" do
+    it "does have some traces started" do
+      expect(tracer.spans).not_to be_empty
+    end
+
+    it "does have some traces recorded" do
+      expect(tracer.finished_spans).not_to be_empty
+    end
+  end
+
+  context "when we expect exactly N traces" do
+    it "has N traces started" do
+      expect(tracer.spans.size).to eq(N)
+    end
+
+    it "has N traces recorded" do
+      expect(tracer.finished_spans.size).to eq(N)
+    end
+  end
+end
+```
+
 ## Test::Span
 
 In addition to OT compatible methods `Test::Span` provides the following methods:
@@ -41,6 +81,66 @@ In addition to OT compatible methods `Test::Span` provides the following methods
 
 The modification operations e.g. `operation_name=`, `set_tag`, `set_baggage_item` on a span are not allowed after it's finished. It throws `Test::Span::SpanAlreadyFinished` exception. The same with `finish`. The span can be finished only once.
 
+### Usage
+
+```ruby
+require "test/tracer"
+
+describe "Test::Span examples" do
+  let(:tracer) { Test::Tracer.new }
+
+  context "when a new span was started" do
+    let(:span) { tracer.start_span("operation name", tags: {'component' => 'ActiveRecord'}) }
+
+    it "is in progress" do
+      expect(span.in_progress?).to eq(true) 
+    end
+
+    it "does have the proper name" do
+      expect(span.operation_name).to eq("operation name")
+    end
+
+    it "does include standard OT tags" do
+      expect(span.tags).to include('component' => 'ActiveRecord')
+    end
+
+    it "does not have any log entries" do
+      expect(span.logs).to be_empty
+    end
+  end
+
+  context "when an event was logged" do
+    let(:span) do 
+      current_span = tracer.start_span("operation name")
+      current_span.log(event: "exceptional message", severity: Logger::ERROR, pid: $1)
+      current_span
+    end
+
+    it "does have some log entries recorded" do
+      expect(span.logs).not_to be_empty
+    end
+
+    it "includes all the event attributes" do
+      log = span.logs.first
+      expect(log.event).to eq("exceptional message")
+      expect(log.fields).to include(severity: Logger::ERROR)
+    end
+  end
+
+  context "when a span was finished" do
+    let(:span) { tracer.start_span("operation name").finish }
+
+    it "is not in progress" do
+      expect(span.in_progress?).to eq(false)
+    end
+
+    it "can't be finished twice" do
+      expect { span.finish }.to raise_error(Test::Span::SpanAlreadyFinished)
+    end
+  end
+end
+```
+
 ## Test::SpanContext
 
 Context propagation is fully implemented by the tracer, and is inspired by [Jaeger](http://jaeger.readthedocs.io/en/latest/) and [TraceContext](https://github.com/TraceContext/tracecontext-spec/pull/1/files). In addition to OT compatible methods `Test::SpanContext` provides the following methods:
@@ -49,22 +149,28 @@ Context propagation is fully implemented by the tracer, and is inspired by [Jaeg
 1. `span_id` returns the ID of the current span.
 2. `parent_span_id` returns the ID of the parent span.
 
-## Usage
+
+### Usage
 
 ```ruby
-require 'test/tracer'
+require "test/tracer"
 
-tracer = Test::Tracer.new
+describe "Test::SpanContext examples" do
+  let(:tracer) { Test::Tracer.new }
 
-root_span = tracer.start_span("root")
-tracer.spans # => will include root_span
-child_span = tracer.start_span("child", child_of: root_span)
-tracer.spans # => will include both root_span, child_span 
+  context "when a new span was started as child of root" do
+    let(:root_context) { tracer.start_span("root span").context } 
+    let(:child_context) { tracer.start_span("child span", child_of: root_context) }
 
-child_span.finish
-tracer.finished_spans # => will include child_span
-root_span.finish
-tracer.finished_spans # => will include child_span, root_span
+    it "all have the same trace_id" do
+      expect(child_context.trace_id).to eq(root_context.trace_id)
+    end
+
+    it "propagates parent child relationship" do
+      expect(child_context.parent_span_id).to eq(root_context.span_id)
+    end
+  end
+end
 ```
 
 ## Development
