@@ -160,7 +160,7 @@ describe "Test::SpanContext examples" do
 
   context "when a new span was started as child of root" do
     let(:root_context) { tracer.start_span("root span").context } 
-    let(:child_context) { tracer.start_span("child span", child_of: root_context) }
+    let(:child_context) { tracer.start_span("child span", child_of: root_context).context }
 
     it "all have the same trace_id" do
       expect(child_context.trace_id).to eq(root_context.trace_id)
