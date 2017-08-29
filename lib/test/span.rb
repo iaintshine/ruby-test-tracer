@@ -29,6 +29,12 @@ module Test
       @in_progress
     end
 
+    alias_method :started?, :in_progress?
+
+    def finished?
+      !in_progress?
+    end
+
     def context
       @context
     end

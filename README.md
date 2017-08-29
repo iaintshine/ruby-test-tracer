@@ -73,7 +73,7 @@ end
 In addition to OT compatible methods `Test::Span` provides the following methods:
 
 1. `tracer` returns the tracer the span was created by.
-1. `in_progress?` informs whether the span is in progress, or it's finished.
+1. `in_progress?`, `started?`, `finished?` informs whether the span is in progress, or it's finished.
 2. `start_time` returns when the span was started.
 2. `end_time` returns when the span was finished, or nil if still in progress.
 2. `tags` returns the span's tags.
