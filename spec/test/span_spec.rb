@@ -10,6 +10,13 @@ RSpec.describe Test::Span do
     describe :in_progress? do
       it "is in progress" do
         expect(span.in_progress?).to eq(true)
+        expect(span.started?).to eq(true)
+      end
+    end
+
+    describe :finished? do
+      it "is not finished" do
+        expect(span.finished?).to eq(false)
       end
     end
 
@@ -140,6 +147,14 @@ RSpec.describe Test::Span do
         it "is not in progress" do
           span.finish
           expect(span.in_progress?).to eq(false)
+          expect(span.started?).to eq(false)
+        end
+      end
+
+      describe :finished? do
+        it "is finished" do
+          span.finish
+          expect(span.finished?).to eq(true)
         end
       end
 
