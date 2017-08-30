@@ -70,7 +70,8 @@ module Test
     def inject(span_context, format, carrier)
       Type! span_context, ::Test::SpanContext, NilClass
       NotNull! format
-      NotNull! carrier
+
+      return unless carrier
 
       injector = @injectors[format]
       if injector

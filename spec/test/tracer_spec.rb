@@ -91,6 +91,13 @@ RSpec.describe Test::Tracer do
     let(:tracer) { Test::Tracer.new }
     let(:span) { tracer.start_span("root") }
 
+    context "nil carrier" do
+      it "doesn't throw any exceptions" do
+        carrier = nil
+        expect { tracer.inject(span.context, OpenTracing::FORMAT_TEXT_MAP, carrier) }.not_to raise_error
+      end
+    end
+
     context "text map format" do
       it "propagates context" do
         carrier = {}
