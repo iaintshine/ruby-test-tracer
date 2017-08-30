@@ -31,5 +31,13 @@ module Test
       @parent_span_id = parent_span_id
       @baggage = baggage
     end
+
+    def ==(rhs)
+      self.class == rhs.class &&
+        trace_id == rhs.trace_id &&
+        span_id == rhs.span_id &&
+        parent_span_id == rhs.parent_span_id &&
+        baggage == rhs.baggage
+    end
   end
 end
