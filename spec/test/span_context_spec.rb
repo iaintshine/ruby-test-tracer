@@ -75,4 +75,26 @@ RSpec.describe Test::SpanContext do
       expect(Test::SpanContext.child_of(parent_context).baggage).to eq(parent_context.baggage)
     end
   end
+
+  describe "equality operator" do
+    it "returns true for same instances" do
+      context1 = Test::SpanContext.root
+
+      expect(context1).to eq(context1)
+    end
+
+    it "returns true for objects with the same state" do
+      context1 = Test::SpanContext.root
+      context2 = context1.dup
+
+      expect(context1).to eq(context2)
+    end
+
+    it "returns false for objects with differnet state" do
+      context1 = Test::SpanContext.root
+      context2 = Test::SpanContext.root
+
+      expect(context1).not_to eq(context2)
+    end
+  end
 end
