@@ -86,6 +86,16 @@ module Test
       self
     end
 
+    def to_s
+      "Span(operation_name=#{operation_name}, " +
+        "in_progress=#{in_progress?}, " +
+        "tags=#{tags}, " +
+        "logs=#{logs}, " +
+        "start_time=#{start_time}, " +
+        "end_time=#{end_time}, " +
+        "context=#{context})"
+    end
+
   private
 
     def ensure_in_progress!
