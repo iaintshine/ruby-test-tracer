@@ -32,6 +32,10 @@ module Test
       @baggage = baggage
     end
 
+    def to_s
+      "SpanContext(trace_id=#{trace_id}, span_id=#{span_id}, parent_span_id=#{parent_span_id}, baggage=#{baggage})"
+    end
+
     def ==(rhs)
       self.class == rhs.class &&
         trace_id == rhs.trace_id &&
