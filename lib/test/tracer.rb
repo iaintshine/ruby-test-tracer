@@ -1,6 +1,6 @@
 require 'opentracing'
 
-require_relative 'type_check'
+require 'test/type_check'
 require 'test/id_provider'
 require 'test/span_context'
 require 'test/span'
