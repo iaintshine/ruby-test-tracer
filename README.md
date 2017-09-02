@@ -28,6 +28,9 @@ In addition to OT compatible methods `Test::Tracer` provides the following metho
 1. `spans` returns all spans, including those in progress.
 2. `finished_spans` returns only finished spans.
 
+The tracer plays nicely with other wrapping tracers until your wrapped span, and span context implements `wrapped`
+method. The method must return the wrapped item. You can customize the behaviour by implementing `Test::Wrapped::Extractor` and setting `wrapped_span_extractor` and/or `wrapped_span_context_extractor`.
+
 ### Usage
 
 ```ruby
