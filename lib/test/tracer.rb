@@ -5,6 +5,7 @@ require 'test/id_provider'
 require 'test/span_context'
 require 'test/span'
 require 'test/propagation'
+require 'test/wrapped'
 
 module Test
   class Tracer < OpenTracing::Tracer
@@ -13,7 +14,11 @@ module Test
     attr_reader :spans, :finished_spans
     attr_reader :injectors, :extractors
 
+    attr_accessor :wrapped_span_extractor
+    attr_accessor :wrapped_span_context_extractor
+
     attr_accessor :logger
+
 
     def initialize(logger: nil)
       @logger = logger
@@ -26,6 +31,10 @@ module Test
 
       register_codec(OpenTracing::FORMAT_TEXT_MAP, Propagation::TextMapCodec.new)
       register_codec(OpenTracing::FORMAT_RACK, Propagation::RackCodec.new)
+
+      default_extractor = Wrapped::DefaultExtractor.new
+      @wrapped_span_extractor = default_extractor
+      @wrapped_span_context_extractor = default_extractor
     end
 
     def register_injector(format, injector)
@@ -52,7 +61,7 @@ module Test
 
     # OT complaiant
     def start_span(operation_name, child_of: nil, references: nil, start_time: Time.now, tags: nil)
-      Type! child_of, ::Test::Span, ::Test::SpanContext, NilClass
+      child_of = extract_span(child_of) || extract_span_context(child_of)
 
       parent_context = child_of && child_of.respond_to?(:context) ? child_of.context : child_of
       new_context = parent_context ? ::Test::SpanContext.child_of(parent_context) : ::Test::SpanContext.root
@@ -68,8 +77,8 @@ module Test
 
     # OT complaiant
     def inject(span_context, format, carrier)
-      Type! span_context, ::Test::SpanContext, NilClass
       NotNull! format
+      span_context = extract_span_context(span_context)
 
       return unless carrier
 
@@ -104,6 +113,22 @@ module Test
   private
     def log(severity, message)
       logger.log(severity, message) if logger
+    end
+
+    def extract_span(span)
+      if Type?(span, ::Test::Span, NilClass)
+        span
+      else
+        wrapped_span_extractor.extract(span) if wrapped_span_extractor
+      end
+    end
+
+    def extract_span_context(span_context)
+      if Type?(span_context, ::Test::SpanContext, NilClass)
+        span_context
+      else
+        wrapped_span_context_extractor.extract(span_context) if wrapped_span_context_extractor
+      end
     end
   end
 end
