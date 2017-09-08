@@ -34,7 +34,7 @@ method. The method must return the wrapped item. You can customize the behaviour
 ### Usage
 
 ```ruby
-require "test/tracer"
+require "test-tracer"
 
 describe "Test::Tracer examples" do
   let(:tracer) { Test::Tracer.new }
@@ -87,7 +87,7 @@ The modification operations e.g. `operation_name=`, `set_tag`, `set_baggage_item
 ### Usage
 
 ```ruby
-require "test/tracer"
+require "test-tracer"
 
 describe "Test::Span examples" do
   let(:tracer) { Test::Tracer.new }
@@ -156,7 +156,7 @@ Context propagation is fully implemented by the tracer, and is inspired by [Jaeg
 ### Usage
 
 ```ruby
-require "test/tracer"
+require "test-tracer"
 
 describe "Test::SpanContext examples" do
   let(:tracer) { Test::Tracer.new }

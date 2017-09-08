@@ -1,5 +1,5 @@
 require "bundler/setup"
-require "test/tracer"
+require "test-tracer"
 require "support/wrapping_tracer"
 
 RSpec.configure do |config|
