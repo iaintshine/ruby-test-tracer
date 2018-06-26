@@ -76,6 +76,10 @@ module Test
       @logs << LogEntry.new(event, timestamp, fields)
     end
 
+    def log_kv(*attributes)
+      log(*attributes)
+    end
+
     def finish(end_time: Time.now)
       Type! end_time, Time
       ensure_in_progress!
