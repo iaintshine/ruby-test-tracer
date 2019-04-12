@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "test-tracer"
-  spec.version       = "1.2.1"
+  spec.version       = "1.2.2"
   spec.authors       = ["iaintshine"]
   spec.email         = ["bodziomista@gmail.com"]
 
@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://github.com/iaintshine/ruby-test-tracer"
   spec.license       = "Apache-2.0"
 
-  spec.required_ruby_version = ">= 2.2.0"
+  spec.required_ruby_version = ">= 2.4.0"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^(test|spec|features)/})
@@ -25,6 +25,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'opentracing', '~> 0.5.0'
 
   spec.add_development_dependency "bundler", "~> 1.15"
-  spec.add_development_dependency "rake", "~> 10.0"
-  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "rake"
+  spec.add_development_dependency "rspec"
 end

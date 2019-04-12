@@ -50,7 +50,7 @@ module Test
       Type! key, String
       ensure_in_progress!
 
-      @tags[key] = Type?(value, String, Fixnum, Bignum, Float, TrueClass, FalseClass) ? value : value.to_s
+      @tags[key] = Type?(value, String, Integer, Float, TrueClass, FalseClass) ? value : value.to_s
       self
     end
 
