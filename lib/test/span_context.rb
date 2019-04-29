@@ -32,6 +32,14 @@ module Test
       @baggage = baggage
     end
 
+    def set_baggage_item(key, value)
+      @baggage[key.to_s] = value.to_s
+    end
+
+    def get_baggage_item(key)
+      @baggage[key.to_s]
+    end
+
     def to_s
       "SpanContext(trace_id=#{trace_id}, span_id=#{span_id}, parent_span_id=#{parent_span_id}, baggage=#{baggage})"
     end

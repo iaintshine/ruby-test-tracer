@@ -1,6 +1,7 @@
 require "bundler/setup"
 require "test-tracer"
 require "support/wrapping_tracer"
+require 'pry'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

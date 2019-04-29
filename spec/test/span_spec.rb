@@ -131,14 +131,32 @@ RSpec.describe Test::Span do
       end
 
       it "fills up log entries attributes properly" do
+        event_name = "event"
         time = Time.now
-        span.log(event: "event", timestamp: time, additional: :info)
+        span.log(event: event_name, timestamp: time, additional: :info)
         log = span.logs.last
 
         expect(log).to be_instance_of(Test::Span::LogEntry)
-        expect(log.event).to eq("event")
+        expect(log.fields[:event]).to eq(event_name)
         expect(log.timestamp).to eq(time)
-        expect(log.fields).to eq(additional: :info)
+        expect(log.fields).to eq(additional: :info, event: event_name)
+      end
+    end
+
+    describe :log_kv do
+      it "creates new log entry" do
+        span.log_kv
+        expect(span.logs.size).to eq(1)
+      end
+
+      it "fills up log entries attributes properly" do
+        time = Time.now
+        span.log_kv(timestamp: time, additional: :info, something: :else)
+        log = span.logs.last
+
+        expect(log).to be_instance_of(Test::Span::LogEntry)
+        expect(log.timestamp).to eq(time)
+        expect(log.fields).to eq(additional: :info, :something=>:else)
       end
     end
 

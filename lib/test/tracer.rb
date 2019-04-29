@@ -3,6 +3,8 @@ require 'opentracing'
 require 'test/type_check'
 require 'test/id_provider'
 require 'test/span_context'
+require 'test/scope_manager'
+require 'test/scope'
 require 'test/span'
 require 'test/propagation'
 require 'test/wrapped'
@@ -12,13 +14,13 @@ module Test
     include TypeCheck
 
     attr_reader :spans, :finished_spans
+    attr_reader :scope_manager
     attr_reader :injectors, :extractors
 
     attr_accessor :wrapped_span_extractor
     attr_accessor :wrapped_span_context_extractor
 
     attr_accessor :logger
-
 
     def initialize(logger: nil)
       @logger = logger
@@ -35,6 +37,7 @@ module Test
       default_extractor = Wrapped::DefaultExtractor.new
       @wrapped_span_extractor = default_extractor
       @wrapped_span_context_extractor = default_extractor
+      @scope_manager = ScopeManager.new
     end
 
     def register_injector(format, injector)
@@ -59,23 +62,70 @@ module Test
       self
     end
 
-    # OT complaiant
-    def start_span(operation_name, child_of: nil, references: nil, start_time: Time.now, tags: nil)
-      child_of = extract_span(child_of) || extract_span_context(child_of)
+    # OT compliant
+    def start_active_span(operation_name,
+                          child_of: nil,
+                          references: nil,
+                          start_time: Time.now,
+                          tags: {},
+                          ignore_active_scope: false,
+                          finish_on_close: true,
+                          **)
+      span = start_span(
+        operation_name,
+        child_of: child_of,
+        references: references,
+        start_time: start_time,
+        tags: tags,
+        ignore_active_scope: ignore_active_scope
+      )
+      scope = @scope_manager.activate(span, finish_on_close: finish_on_close)
 
-      parent_context = child_of && child_of.respond_to?(:context) ? child_of.context : child_of
-      new_context = parent_context ? ::Test::SpanContext.child_of(parent_context) : ::Test::SpanContext.root
+      if block_given?
+        begin
+          yield scope
+        ensure
+          scope.close
+        end
+      else
+        scope
+      end
+    end
+
+    # OT compliant
+    def start_span(operation_name,
+                   child_of: nil,
+                   references: nil,
+                   start_time: Time.now,
+                   tags: nil,
+                   ignore_active_scope: false,
+                   **)
+
+      new_context = prepare_span_context(
+        child_of: child_of,
+        references: references,
+        ignore_active_scope: ignore_active_scope
+      )
 
       new_span = Span.new(tracer: self,
                           operation_name: operation_name,
                           context: new_context,
                           start_time: start_time,
+                          references: references,
                           tags: tags)
       @spans << new_span
-      new_span
+      if block_given?
+        begin
+          yield(new_span)
+        ensure
+          new_span.finish
+        end
+      else
+        new_span
+      end
     end
 
-    # OT complaiant
+    # OT compliant
     def inject(span_context, format, carrier)
       NotNull! format
       span_context = extract_span_context(span_context)
@@ -90,7 +140,7 @@ module Test
       end
     end
 
-    # OT complaiant
+    # OT compliant
     def extract(format, carrier)
       NotNull! format
       NotNull! carrier
@@ -110,17 +160,46 @@ module Test
       self
     end
 
-  private
+    private
+
+    def prepare_span_context(child_of:, references:, ignore_active_scope:)
+      context =
+        context_from_child_of(child_of) ||
+        context_from_references(references) ||
+        context_from_active_scope(ignore_active_scope)
+
+      context = extract_span_context(context)
+      if context
+        ::Test::SpanContext.child_of(context)
+      else
+        ::Test::SpanContext.root
+      end
+    end
+
+    def context_from_child_of(child_of)
+      return nil unless child_of
+      child_of.respond_to?(:context) ? child_of.context : child_of
+    end
+
+    def context_from_references(references)
+      return nil if !references || references.none?
+
+      # Prefer CHILD_OF reference if present
+      ref = references.detect do |reference|
+        reference.type == OpenTracing::Reference::CHILD_OF
+      end
+      (ref || references[0]).context
+    end
+
     def log(severity, message)
       logger.log(severity, message) if logger
     end
 
-    def extract_span(span)
-      if Type?(span, ::Test::Span, NilClass)
-        span
-      else
-        wrapped_span_extractor.extract(span) if wrapped_span_extractor
-      end
+    def context_from_active_scope(ignore_active_scope)
+      return if ignore_active_scope
+
+      active_scope = @scope_manager.active
+      active_scope.span.context if active_scope
     end
 
     def extract_span_context(span_context)

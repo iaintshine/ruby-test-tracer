@@ -38,6 +38,15 @@ RSpec.describe Test::Tracer do
       end
     end
 
+    it 'works corretly with passed in block' do
+      value = tracer.start_span("test") do |span|
+        expect(span).to be_instance_of(Test::Span)
+        'expected_value'
+      end
+
+      expect(value).to eq('expected_value')
+    end
+
     describe "context propagation" do
       it "creates new root context when no parent context passed" do
         expect(tracer.start_span("root").context.parent_span_id).to eq(nil)
@@ -67,6 +76,16 @@ RSpec.describe Test::Tracer do
         expect(tracer.spans.size).to eq(1)
         expect(tracer.spans.first).to eq(span)
       end
+
+      it 'adds newely started span to spans collection with block' do
+        span = tracer.start_span("span") do |span|
+          span
+        end
+
+        expect(tracer.spans.size).to eq(1)
+        expect(tracer.finished_spans.size).to eq(1)
+        expect(tracer.spans.first).to eq(span)
+      end
     end
 
     describe :finished_spans do
@@ -86,6 +105,29 @@ RSpec.describe Test::Tracer do
       end
     end
   end
+
+  # describe :start_active_span do
+  #   let(:tracer) { Test::Tracer.new }
+
+  #   it "returns instance of Scope" do
+  #     expect(tracer.start_active_span("test")).to be_instance_of(Test::Scope)
+  #   end
+
+  #   describe "operation_name propagation" do
+  #     it "sets operation_name on newly created span" do
+  #       expect(tracer.start_active_span("test").operation_name).to eq("test")
+  #     end
+  #   end
+
+  #   describe "tags propagation" do
+  #     it "sets tags on newly created span" do
+  #       tags = { 'span.kind' => 'client' }
+  #       expect(tracer.start_active_span("test", tags: tags).tags).to eq(tags)
+  #     end
+  #   end
+
+
+  # end
 
   describe :inject do
     let(:tracer) { Test::Tracer.new }
