@@ -77,10 +77,11 @@ In addition to OT compatible methods `Test::Span` provides the following methods
 
 1. `tracer` returns the tracer the span was created by.
 1. `in_progress?`, `started?`, `finished?` informs whether the span is in progress, or it's finished.
-2. `start_time` returns when the span was started.
-2. `end_time` returns when the span was finished, or nil if still in progress.
-2. `tags` returns the span's tags.
-2. `logs` returns the span's logs, an array of `Test::Span::LogEntry`s.
+1. `start_time` returns when the span was started.
+1. `end_time` returns when the span was finished, or nil if still in progress.
+1. `tags` returns the span's tags.
+1. `references` returns SpanContext references to corrent span (either as child_of or followes_from and extracted from OpenTracing::Reference)
+1. `logs` returns the span's logs, an array of `Test::Span::LogEntry`s.
 
 The modification operations e.g. `operation_name=`, `set_tag`, `set_baggage_item` on a span are not allowed after it's finished. It throws `Test::Span::SpanAlreadyFinished` exception. The same with `finish`. The span can be finished only once.
 
@@ -96,7 +97,7 @@ describe "Test::Span examples" do
     let(:span) { tracer.start_span("operation name", tags: {'component' => 'ActiveRecord'}) }
 
     it "is in progress" do
-      expect(span.in_progress?).to eq(true) 
+      expect(span.in_progress?).to eq(true)
     end
 
     it "does have the proper name" do
@@ -113,7 +114,7 @@ describe "Test::Span examples" do
   end
 
   context "when an event was logged" do
-    let(:span) do 
+    let(:span) do
       current_span = tracer.start_span("operation name")
       current_span.log(event: "exceptional message", severity: Logger::ERROR, pid: $1)
       current_span
@@ -162,7 +163,7 @@ describe "Test::SpanContext examples" do
   let(:tracer) { Test::Tracer.new }
 
   context "when a new span was started as child of root" do
-    let(:root_context) { tracer.start_span("root span").context } 
+    let(:root_context) { tracer.start_span("root span").context }
     let(:child_context) { tracer.start_span("child span", child_of: root_context).context }
 
     it "all have the same trace_id" do
@@ -175,6 +176,20 @@ describe "Test::SpanContext examples" do
   end
 end
 ```
+
+## Test::ScopeManager
+
+ScopeManager is fully implemented by the tracer, and is also inspired by inspired by [Jaeger](http://jaeger.readthedocs.io/en/latest/). In addition to OT compatible methods `Test::ScopeManager` provides the following methods:
+
+1. `scope_stack` returns the stack of all scope currently, which are not closed.
+
+## Test::Scope
+
+Scope is implemented by the tracer, and is returned from `tracer#start_active_span` and `ScopeManager#activate` It is inspired by [Jaeger](http://jaeger.readthedocs.io/en/latest/). In addition to OT compatible methods `Test::Scope` provides the following methods:
+
+1. `finish_on_close` informs whether the scope's span should be finished on scope closing.
+1. `scope_stack` returns reference to scope manager scope stack
+1. `closed?` informs whether the scope has already been closed
 
 ## Development
 

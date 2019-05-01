@@ -21,6 +21,7 @@ module Test
       @closed
     end
 
+    # OT complient
     # Close scope
     #
     # Mark the end of the active period for the current thread and Scope,

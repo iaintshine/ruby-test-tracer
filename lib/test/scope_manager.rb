@@ -17,6 +17,7 @@ module Test
       @scope_stack = ScopeStack.new
     end
 
+    # OT compliant
     # Make a span instance active
     #
     # @param span [Span] the Span that should become active
@@ -32,6 +33,7 @@ module Test
       scope
     end
 
+    # OT compliant
     # Return active scope
     #
     # If there is a non-null Scope, its wrapped Span becomes an implicit parent
