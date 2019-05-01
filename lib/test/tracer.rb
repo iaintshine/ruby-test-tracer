@@ -126,9 +126,16 @@ module Test
     end
 
     # OT compliant
+    # active_span method it is implemented in OpenTracing tracer
+    # def active_span
+    #   scope = scope_manager.active
+    #   scope.span if scope
+    # end
+
+    # OT compliant
     def inject(span_context, format, carrier)
       NotNull! format
-      span_context = extract_span_context(span_context)
+      span_context = extract_wrapped_span_context(span_context)
 
       return unless carrier
 
@@ -168,7 +175,7 @@ module Test
         context_from_references(references) ||
         context_from_active_scope(ignore_active_scope)
 
-      context = extract_span_context(context)
+      context = extract_wrapped_span_context(context)
       if context
         ::Test::SpanContext.child_of(context)
       else
@@ -202,7 +209,7 @@ module Test
       active_scope.span.context if active_scope
     end
 
-    def extract_span_context(span_context)
+    def extract_wrapped_span_context(span_context)
       if Type?(span_context, ::Test::SpanContext, NilClass)
         span_context
       else

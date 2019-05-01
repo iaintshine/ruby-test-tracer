@@ -4,7 +4,7 @@ RSpec.describe Test::Span do
   let(:tracer) { Test::Tracer.new }
   let(:span_context) { Test::SpanContext.root }
   let(:operation_name) { "span_name" }
-  let(:span) { Test::Span.new(tracer: tracer, context: span_context, operation_name: operation_name) }
+  let(:span) { build_span(tracer, operation_name: operation_name, span_context: span_context) }
 
   describe :initialize do
     describe :in_progress? do
@@ -30,6 +30,22 @@ RSpec.describe Test::Span do
       it "returns start_time from initialization" do
         time = Time.now - 60
         expect(Test::Span.new(tracer: tracer, context: span_context, operation_name: operation_name, start_time: time).start_time).to eq(time)
+      end
+    end
+
+     describe :references do
+      it "returns references from initialization" do
+        open_tracing_references = Array.new(3) { OpenTracing::Reference.child_of(build_span_context) }
+
+        span = Test::Span.new(
+          tracer: tracer,
+          context: span_context,
+          operation_name: operation_name,
+          references: open_tracing_references
+        )
+        expect(span.references).to be_instance_of(Array)
+        expect(span.references.first).to be_instance_of(OpenTracing::Reference)
+        expect(span.references).to eq(open_tracing_references)
       end
     end
   end
@@ -89,7 +105,7 @@ RSpec.describe Test::Span do
 
       it "sets a baggage on context" do
         span.set_baggage_item("key", "value")
-        expect(span.context.baggage["key"]).to eq("value")
+        expect(span.context.get_baggage_item("key")).to eq("value")
       end
 
       it "allows string only keys" do
@@ -156,7 +172,7 @@ RSpec.describe Test::Span do
 
         expect(log).to be_instance_of(Test::Span::LogEntry)
         expect(log.timestamp).to eq(time)
-        expect(log.fields).to eq(additional: :info, :something=>:else)
+        expect(log.fields).to eq(additional: :info, something: :else)
       end
     end
 

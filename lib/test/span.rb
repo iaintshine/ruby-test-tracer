@@ -14,6 +14,7 @@ module Test
       Type! operation_name, String
       Type! start_time, Time
       Type! tags, Hash, NilClass
+      Type! references, Array, NilClass
 
       @tracer = tracer
       @context = context

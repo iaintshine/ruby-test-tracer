@@ -11,6 +11,8 @@ module Test
   # via ScopeManager#activate and access to an active Span/Scope via
   # ScopeManager#active
   class ScopeManager
+    attr_reader :scope_stack
+
     def initialize
       @scope_stack = ScopeStack.new
     end
@@ -40,10 +42,6 @@ module Test
     #   currently active Span.
     def active
       @scope_stack.peek
-    end
-
-    def stack
-      @scope_stack.stack
     end
   end
 end

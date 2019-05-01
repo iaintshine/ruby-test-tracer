@@ -24,7 +24,7 @@ module Test
       end
 
       def stack
-        Thread.current[@scope_identifier]
+        Thread.current[@scope_identifier].dup
       end
 
       private

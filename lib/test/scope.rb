@@ -15,7 +15,7 @@ module Test
     # Return the Span scoped by this Scope
     #
     # @return [Span]
-    attr_reader :span
+    attr_reader :span, :finish_on_close, :scope_stack
 
     def closed?
       @closed
@@ -37,6 +37,7 @@ module Test
           "removed: #{removed_scope.inspect}, "\
           "expected: #{inspect}"
       end
+      removed_scope
     end
   end
 end
