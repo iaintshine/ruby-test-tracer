@@ -2,24 +2,26 @@ module Test
   class Span < OpenTracing::Span
     class SpanAlreadyFinished < StandardError; end
 
-    class LogEntry < Struct.new(:event, :timestamp, :fields); end
+    class LogEntry < Struct.new(:timestamp, :fields); end
 
     include TypeCheck
 
-    attr_reader :tracer, :operation_name, :start_time, :end_time, :tags, :logs
+    attr_reader :tracer, :operation_name, :start_time, :end_time, :tags, :logs, :references
 
-    def initialize(tracer:, context:, operation_name:, start_time: Time.now, tags: nil)
+    def initialize(tracer:, context:, operation_name:, start_time: Time.now, references: [], tags: nil)
       Type! tracer, ::Test::Tracer
       Type! context, ::Test::SpanContext
       Type! operation_name, String
       Type! start_time, Time
       Type! tags, Hash, NilClass
+      Type! references, Array, NilClass
 
       @tracer = tracer
       @context = context
       @operation_name = operation_name
       @tags = tags || {}
       @logs = []
+      @references = references
       @start_time = start_time
       @end_time = nil
       @in_progress = true
@@ -59,21 +61,25 @@ module Test
       Type! value, String, NilClass
       ensure_in_progress!
 
-      @context.baggage[key] = value.to_s
+      @context.set_baggage_item(key, value)
       self
     end
 
     def get_baggage_item(key)
       Type! key, String
-      @context.baggage[key]
+      @context.get_baggage_item(key)
     end
 
-    def log(event: nil, timestamp: Time.now, **fields)
-      Type! event, String, NilClass
+    def log(**args)
+      Type! args, Hash, NilClass
+      ensure_in_progress!
+      log_kv(**args)
+    end
+
+    def log_kv(timestamp: Time.now, **fields)
       Type! timestamp, Time
       ensure_in_progress!
-
-      @logs << LogEntry.new(event, timestamp, fields)
+      @logs << LogEntry.new(timestamp, fields)
     end
 
     def finish(end_time: Time.now)
